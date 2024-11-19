@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  chainlit-app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: ["chainlit", "run", "chainlit_app.py", "-w", "--host", "0.0.0.0"]

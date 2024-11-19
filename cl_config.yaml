@@ -1,0 +1,26 @@
+chat_timeout: 3600  # Set timeout to 1 hour (in seconds)
+
+oauth_callback: oauth_callback
+
+ui:
+  name: Cybersecurity Assistant
+  description: Your friendly cybersecurity red team and bug bounty information assistant
+  theme: dark
+
+features:
+  multi_modal: true
+  feedback: true
+  chat_settings: true
+  file_upload: true
+  audio: true
+  video: true
+
+chat_settings:
+  visible: true  # Always show chat settings in the task bar
+
+oauth_providers:
+  google:
+    client_id: ${OAUTH_GOOGLE_CLIENT_ID}
+    client_secret: ${OAUTH_GOOGLE_CLIENT_SECRET}
+
+auth_secret: ${CHAINLIT_AUTH_SECRET}

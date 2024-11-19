@@ -1,0 +1,9 @@
+*.pyc
+__pycache__
+storage/
+.chainlit/
+chainlit.md
+data/
+chatbot/
+.files/
+.env
