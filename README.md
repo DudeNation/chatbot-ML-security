@@ -157,6 +157,18 @@ chainlit run chainlit_app.py -w
 
 This command will start the Chainlit server and open a web interface in your default browser.
 
+### 3.  Docker Compose
+
+To run the chatbot using Docker Compose:
+
+Build and start the project:
+
+```bash
+docker-compose up --build
+```
+
+This will start all necessary services, including the chatbot server, and expose the required endpoints.
+
 ## Using the Chatbot
 
 1. Once the chatbot is running, you can start asking questions about cybersecurity red team operations and bug bounty programs.
