@@ -32,7 +32,7 @@ import chainlit as cl
 from typing import Dict as ThreadDict
 from llama_index.core.memory import ChatMemoryBuffer
 from unstructured.partition.html import partition_html
-import traceback  # Add this import at the top of the file
+import traceback
 import iso639
 from llama_index.core import Document
 import asyncio
@@ -156,42 +156,7 @@ def get_embeddings(client, list_of_text, engine, **kwargs):
     logger.info(f"get_embeddings: Calling get_openai_embeddings with engine: {engine}")
     return get_openai_embeddings(client, list_of_text, engine, **kwargs)
 
-class CustomOpenAIEmbedding(OpenAIEmbedding):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._primary_model = 'text-embedding-3-small'
-        self._fallback_model = 'text-embedding-ada-002'
-        self._client = OpenAI(api_key=openai_api_key)
-        self._dimension = 1536
-        logger.info(f"Initializing CustomOpenAIEmbedding with primary model: {self._primary_model}")
-
-    def _get_text_embeddings(self, texts: List[str]) -> List[List[float]]:
-        logger.info(f"CustomOpenAIEmbedding: Getting embeddings using primary model: {self._primary_model}")
-        
-        for attempt in range(MAX_RETRIES):
-            try:
-                embeddings = self._try_get_embeddings(texts, self._primary_model)
-                logger.info(f"CustomOpenAIEmbedding: Received {len(embeddings)} embeddings from primary model")
-                return embeddings
-            except Exception as e:
-                logger.warning(f"Failed to get embeddings with primary model. Attempt {attempt + 1}/{MAX_RETRIES}. Error: {e}")
-                if attempt == MAX_RETRIES - 1:
-                    logger.info(f"Falling back to {self._fallback_model}")
-                    try:
-                        embeddings = self._try_get_embeddings(texts, self._fallback_model)
-                        logger.info(f"CustomOpenAIEmbedding: Received {len(embeddings)} embeddings from fallback model")
-                        return embeddings
-                    except Exception as e:
-                        logger.error(f"Failed to get embeddings with fallback model. Error: {e}")
-                time.sleep(2 ** attempt)  # Exponential backoff
-        
-        logger.error("All embedding attempts failed. Falling back to local embeddings.")
-        return get_local_embeddings(texts)
-
-    def _try_get_embeddings(self, texts: List[str], model: str) -> List[List[float]]:
-        response = self._client.embeddings.create(input=texts, model=model)
-        return [item.embedding for item in response.data]
-
+# Set up custom embedding model
 Settings.embed_model = CustomOpenAIEmbedding()
 
 logger.info("Custom embedding model set...")
@@ -214,85 +179,6 @@ os.makedirs(nltk_data_dir, exist_ok=True)
 nltk.data.path.append(nltk_data_dir)
 
 logger.info("NLTK data downloaded and set up...")
-
-def lazy_load_documents(blog_files):
-    loader = UnstructuredReader()
-    for blog_file in blog_files:
-        logger.info(f"Loading data from {blog_file}...")
-        blog_docs = loader.load_data(
-            file=Path(blog_file), split_documents=False
-        )
-        for d in blog_docs:
-            d.metadata = {"source": blog_file}
-        yield blog_file, blog_docs
-
-def setup_vector_indices(blog_files):
-    logger.info("Setting up vector indices...")
-    Settings.chunk_size = 512
-    index_set = {}
-
-    for blog_file in blog_files:
-        try:
-            logger.info(f"Loading data from {blog_file}...")
-            with open(blog_file, 'r', encoding='utf-8') as file:
-                content = file.read()
-            
-            # Use a custom function to partition HTML without language detection
-            elements = custom_partition_html(content)
-            
-            # Convert elements to documents
-            docs = [Document(text=str(element), metadata={"source": blog_file}) for element in elements]
-            
-            logger.info(f"Creating index for {blog_file}...")
-            storage_context = StorageContext.from_defaults()
-            cur_index = VectorStoreIndex.from_documents(
-                docs,
-                storage_context=storage_context,
-            )
-            index_set[blog_file] = cur_index
-            storage_context.persist(persist_dir=f"./storage/{Path(blog_file).stem}")
-            logger.info(f"Persisted storage for {blog_file}")
-        except Exception as e:
-            logger.error(f"Error processing {blog_file}: {str(e)}")
-            logger.error(traceback.format_exc())
-            continue
-
-    if not index_set:
-        logger.error("No files were successfully processed.")
-        raise ValueError("No files were successfully processed. Please check your data files.")
-
-    logger.info("Vector indices setup complete.")
-    return index_set
-
-def custom_partition_html(html_content):
-    # Simple HTML parsing without language detection
-    from bs4 import BeautifulSoup
-    soup = BeautifulSoup(html_content, 'html.parser')
-    elements = []
-    for element in soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
-        elements.append(element.get_text())
-    return elements
-
-def setup_query_engine(index_set, blog_files):
-    logger.info("Setting up query engine...")
-    individual_query_engine_tools = [
-        QueryEngineTool(
-            query_engine=index_set[blog_file].as_query_engine(),
-            metadata=ToolMetadata(
-                name=f"idx_{Path(blog_file).stem[:20]}",  # Shortened name
-                description=f"useful for when you want to answer queries about the cybersecurity red team and bug bounty information in {Path(blog_file).stem}",
-            ),
-        )
-        for blog_file in blog_files
-    ]
-
-    query_engine = SubQuestionQueryEngine.from_defaults(
-        query_engine_tools=individual_query_engine_tools,
-        llm=LlamaOpenAI(model="gpt-4o", api_key=openai_api_key),
-    )
-
-    logger.info("Query engine setup complete.")
-    return query_engine, individual_query_engine_tools
 
 def timeout_handler(signum, frame):
     raise TimeoutError("Function call timed out")
@@ -383,10 +269,10 @@ async def process_query(agent, query, max_retries=1, base_delay=1):
 async def on_chat_start():
     logger.info("Starting new chat session...")
     
-    # Initialize chat memory with a slightly higher token limit
-    memory = ChatMemoryBuffer.from_defaults(token_limit=4000)
+    # Initialize chat memory with enhanced token limit for GPT-4o
+    memory = ChatMemoryBuffer.from_defaults(token_limit=16000)
     
-    # Set up the agent with memory
+    # Set up the agent with memory and proper LLM configuration
     blog_files = glob.glob("./data/*.html")
     index_set = setup_vector_indices(blog_files)
     query_engine, individual_query_engine_tools = setup_query_engine(index_set, blog_files)
@@ -400,18 +286,41 @@ async def on_chat_start():
     )
     
     tools = individual_query_engine_tools + [query_engine_tool]
+    
+    # Configure LLM with explicit GPT-4o settings
+    llm = LlamaOpenAI(
+        model="gpt-4o", 
+        api_key=openai_api_key,
+        temperature=0.7,
+        max_tokens=4096
+    )
+    
+    # Set global LLM for consistency
+    Settings.llm = llm
+    
     agent = OpenAIAgent.from_tools(
         tools,
         verbose=True,
         streaming=True,
         memory=memory,
-        llm=LlamaOpenAI(model="gpt-4o", api_key=openai_api_key),
+        llm=llm,
+        system_prompt="""You are an expert cybersecurity assistant specialized in red team operations, penetration testing, and bug bounty hunting. 
+
+Your expertise includes:
+- Advanced penetration testing techniques and methodologies
+- Red team tactics, techniques, and procedures (TTPs)
+- Bug bounty hunting strategies and vulnerability assessment
+- Security tool usage and exploitation frameworks
+- Network security, web application security, and mobile security
+- Incident response and threat hunting
+
+Always provide accurate, ethical, and educational information. Focus on defensive security and responsible disclosure. When discussing attack techniques, always emphasize their use for legitimate security testing and improvement."""
     )
     
     # Store the agent in the user session
     cl.user_session.set("agent", agent)
     
-    logger.info("Chat session initialized with agent and memory.")
+    logger.info("Chat session initialized with agent and memory using GPT-4o.")
 
 @cl.on_chat_resume
 async def on_chat_resume(thread: ThreadDict):

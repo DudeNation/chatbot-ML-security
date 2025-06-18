@@ -3,9 +3,11 @@ chat_timeout: 3600  # Set timeout to 1 hour (in seconds)
 oauth_callback: oauth_callback
 
 ui:
-  name: Cybersecurity Assistant
-  description: Your friendly cybersecurity red team and bug bounty information assistant
+  name: "Pentest Knowledge Assistant"
+  description: "Advanced AI Assistant for Cybersecurity Red Team and Penetration Testing Knowledge"
   theme: dark
+  default_collapse_content: true
+  default_expand_messages: true
 
 features:
   multi_modal: true
@@ -14,9 +16,27 @@ features:
   file_upload: true
   audio: true
   video: true
+  unsafe_allow_html: false
+  latex: true
+  spontaneous_file_upload:
+    enabled: true
+    accept:
+      - "image/*"
+      - "text/*"
+      - "application/pdf"
+      - "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      - "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  speech_to_text:
+    enabled: false
+  prompt_playground: true
 
 chat_settings:
   visible: true  # Always show chat settings in the task bar
+
+project:
+  enable_telemetry: false
+  user_env: []
+  tags: ["cybersecurity", "pentesting", "red-team", "bug-bounty"]
 
 oauth_providers:
   google:
@@ -24,3 +44,11 @@ oauth_providers:
     client_secret: ${OAUTH_GOOGLE_CLIENT_SECRET}
 
 auth_secret: ${CHAINLIT_AUTH_SECRET}
+
+# LiteralAI integration for analytics and monitoring
+literal:
+  api_key: ${LITERAL_API_KEY}
+
+session:
+  max_size_mb: 100
+  timeout: 3600
