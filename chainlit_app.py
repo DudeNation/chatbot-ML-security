@@ -7,7 +7,6 @@ from llama_index.core.memory import ChatMemoryBuffer
 import logging
 import glob
 import os
-import threading
 from dotenv import load_dotenv
 from chainlit.types import ThreadDict
 from chainlit.input_widget import Select, Switch, Slider
@@ -32,7 +31,6 @@ from modules.image_generation import (
 )
 from modules.file_handler import handle_file_upload, handle_url
 from modules.media_handler import handle_media_upload
-from modules.discord_bot import run_discord_bot
 from modules.batch_processor import batch_processor, BatchProcessor
 from modules.url_analyzer import analyze_url_smart, get_cache_stats
 from modules.security_performance import (
@@ -1561,15 +1559,6 @@ if __name__ == "__main__":
     print(terminal.separator())
     
     print(terminal.subheader("SYSTEM STARTUP"))
-    
-    # Start Discord bot in separate thread if token is available
-    if os.getenv("DISCORD_BOT_TOKEN"):
-        print(terminal.info("Discord bot token found - starting integration"))
-        discord_thread = threading.Thread(target=run_discord_bot, daemon=True)
-        discord_thread.start()
-        print(terminal.success("Discord bot started successfully"))
-    else:
-        print(terminal.warning("Discord bot token not found - skipping Discord integration"))
     
     print(terminal.separator())
     print(terminal.info("Starting Chainlit application..."))

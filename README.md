@@ -37,7 +37,7 @@ This project represents a comprehensive implementation of a specialized AI assis
 - **📁 Multi-Format File Support**: PDF, DOCX, images, audio, and video analysis
 - **🖼️ Image Analysis**: Screenshot analysis for security tools and network diagrams
 - **🎨 Content Generation**: AI-powered image generation for documentation
-- **💬 Multi-Platform**: Web interface, CLI, and Discord bot integration
+- **💬 Web Interface**: Comprehensive web-based chat interface
 
 ### Technical Features
 - **⚡ Real-time Streaming**: Live response generation with typing indicators
@@ -86,7 +86,6 @@ The application now supports **49+ media formats** with comprehensive analysis:
 - **OpenAI API Key**: For GPT-4o/GPT-4o-mini access
 - **LiteralAI API Key**: For analytics and monitoring (optional)
 - **Google OAuth Credentials**: For authentication (optional)
-- **Discord Bot Token**: For Discord integration (optional)
 
 ## 🛠️ Installation
 
@@ -148,10 +147,6 @@ OAUTH_GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # LiteralAI Analytics (Optional)
 LITERAL_API_KEY=your-literal-api-key-here
-
-# Discord Integration (Optional)
-DISCORD_BOT_TOKEN=your-discord-bot-token
-ALLOWED_CHANNEL_IDS=channel1,channel2,channel3
 ```
 
 ### Obtaining API Keys
@@ -176,13 +171,6 @@ ALLOWED_CHANNEL_IDS=channel1,channel2,channel3
 3. Navigate to Settings → API Keys
 4. Generate new API key
 5. Copy the key for your environment configuration
-
-#### Discord Bot Setup
-1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
-2. Create New Application
-3. Navigate to Bot section
-4. Create bot and copy token
-5. Enable necessary Privileged Gateway Intents
 
 ## 📊 Data Preparation
 
@@ -239,11 +227,6 @@ https://blog.checkpoint.com/
    python chatbot.py
    ```
 
-3. **Discord Bot (Background)**
-   ```bash
-   python modules/discord_bot.py
-   ```
-
 ### Production Deployment
 
 1. **Docker Compose (Recommended)**
@@ -280,7 +263,6 @@ graph TB
     I --> J[Image Analysis]
     I --> K[File Handler]
     I --> L[Media Processor]
-    C --> M[Discord Bot]
     C --> N[Authentication]
     C --> O[Analytics - LiteralAI]
 ```
@@ -399,7 +381,6 @@ Dynamic configuration updates:
 - **Performance Monitoring**: Real-time analytics
 
 #### 5. Integration Features (1 minute)
-- **Discord Bot**: Demonstrate cross-platform usage
 - **Authentication**: OAuth login process
 - **Docker Deployment**: Production setup
 

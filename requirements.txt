@@ -25,9 +25,7 @@ pandas
 openpyxl
 moviepy
 librosa
-discord.py
 langdetect
-PyNaCl
 aiohttp
 scikit-learn
 faiss-cpu
